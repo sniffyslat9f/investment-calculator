@@ -52,6 +52,27 @@ the CPI series in the same file. It falls back to the assumed rate only where
 the data doesn't reach, and says which it is doing on screen.
 
 
+## The Mac desktop app
+
+There is a clickable icon in `/Applications/Investment Calculator.app`. It is not
+a real application — it is a tiny bundle whose only job is to open the live site,
+so it needs no maintenance and can't fall out of date with the code.
+
+`tools/make-mac-app.sh` rebuilds it from scratch (needs Pillow: `pip3 install
+pillow`). Run it if the live address ever changes — the URL is the first line of
+the script — or if the icon needs redrawing.
+
+The icon is drawn in code inside that script rather than kept only as a binary,
+so it can be edited: a green rounded square with the same rising-chart mark as
+the app header. `tools/icon.icns` is the generated result, committed so the app
+can be rebuilt without regenerating it.
+
+Two things that will waste time if forgotten:
+- It must go in `/Applications`, not `~/Applications`. The second one exists, is
+  easy to write to by mistake, and does not appear in Finder's sidebar — the
+  owner will not find it there.
+- `touch` the bundle after building, or Finder keeps showing the old icon.
+
 ## House style
 
 - **No forecasts, no market predictions, no valuation calls.** Historical data

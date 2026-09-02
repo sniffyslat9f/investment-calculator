@@ -10,6 +10,18 @@ its verified historical returns dataset so the two tools agree with each other.
 **Live:** https://historic-growth-calculator.vercel.app — deployed on Vercel and
 connected to this repo, so pushing to `main` publishes automatically.
 
+## The Mac app
+
+A clickable icon lives in `/Applications/Investment Calculator.app`. It just opens
+the live site — nothing is installed. Rebuild it with:
+
+```
+bash tools/make-mac-app.sh
+```
+
+Run that if the live address changes (it is the first line of the script) or to
+redraw the icon, which is generated in code rather than stored only as a binary.
+
 ## Running it
 
 ```
