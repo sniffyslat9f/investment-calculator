@@ -8,7 +8,7 @@ Nothing outstanding.
 
 ### Put the app online (Sept 2026)
 
-Live at **https://lump-sum-growth.vercel.app**, on Vercel. The GitHub repo is connected, so **any push to `main`
+Live at **https://historic-growth-calculator.vercel.app**, on Vercel. The GitHub repo is connected, so **any push to `main`
 publishes itself** — no manual deploy step from here on.
 
 Verified live: no console errors, the historical mode works, the date range
