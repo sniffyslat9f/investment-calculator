@@ -192,32 +192,6 @@ export function project(inputs: CalcInputs): Result {
   }
 }
 
-// --- every start year -------------------------------------------------------
-
-export interface WindowSummary {
-  count: number
-  worst: { year: number; value: number }
-  median: { year: number; value: number }
-  best: { year: number; value: number }
-}
-
-/** Runs the same inputs from every start year the data allows. */
-export function summariseAllStartYears(inputs: CalcInputs): WindowSummary | null {
-  const years = validStartYears(inputs.stocksPct, inputs.years)
-  if (years.length === 0) return null
-
-  const outcomes = years
-    .map((year) => ({ year, value: project({ ...inputs, mode: "historical", startYear: year }).finalValue }))
-    .sort((a, b) => a.value - b.value)
-
-  return {
-    count: outcomes.length,
-    worst: outcomes[0],
-    median: outcomes[Math.floor((outcomes.length - 1) / 2)],
-    best: outcomes[outcomes.length - 1],
-  }
-}
-
 // --- presentation -----------------------------------------------------------
 
 /** Convert a today's-money figure into the money of its own year. */
@@ -256,6 +230,48 @@ export function nominalFactor(inputs: CalcInputs, yearsElapsed: number): number 
     if (actual !== undefined) return actual
   }
   return Math.pow(1 + inputs.inflationRate, yearsElapsed)
+}
+
+/**
+ * The annualised return the money actually earned, in real (today's money) terms.
+ *
+ * This is a money-weighted return (an IRR), not simply the start and end values
+ * compared — with regular top-ups those two differ, because money paid in later
+ * has had less time to grow. Contributions are dated mid-year to match how the
+ * projection credits them.
+ *
+ * Returns undefined when nothing was invested, or when the portfolio is wiped
+ * out, since there is no meaningful rate to quote.
+ */
+export function annualisedRealReturn(inputs: CalcInputs, result: Result): number | undefined {
+  if (result.totalContributed <= 0 || result.finalValue <= 0) return undefined
+
+  const npv = (rate: number): number => {
+    let v = -inputs.capital
+    result.rows.forEach((row, i) => {
+      if (row.contributions > 0) v -= row.contributions / Math.pow(1 + rate, i + 0.5)
+    })
+    return v + result.finalValue / Math.pow(1 + rate, inputs.years)
+  }
+
+  let lo = -0.9999, hi = 10
+  if (npv(lo) * npv(hi) > 0) return undefined
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2
+    if (npv(lo) * npv(mid) <= 0) hi = mid
+    else lo = mid
+  }
+  return (lo + hi) / 2
+}
+
+/** Average yearly inflation over the run — assumed, or the real thing for a historical period. */
+export function inflationPerYear(inputs: CalcInputs): number {
+  return Math.pow(nominalFactor(inputs, inputs.years), 1 / inputs.years) - 1
+}
+
+/** The same return before inflation is taken off. */
+export function toGross(realRate: number, inputs: CalcInputs): number {
+  return (1 + realRate) * (1 + inflationPerYear(inputs)) - 1
 }
 
 export function formatCurrency(value: number): string {

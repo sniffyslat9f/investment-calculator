@@ -89,14 +89,35 @@ console.log('\n# The date-range rule: a run must fit inside the data')
   eq('a too-late start year is pulled into range', E.clampStartYear(60, 20, 2100), last - 19, 1e-9)
 }
 
-console.log('\n# Every start year')
+console.log('\n# Annualised return')
 {
-  const s = E.summariseAllStartYears({ ...base(), mode: 'historical', years: 20, stocksPct: 100 })
-  ok('counts every valid window', s.count === E.validStartYears(100, 20).length)
-  ok('worst <= median <= best', s.worst.value <= s.median.value && s.median.value <= s.best.value)
-  ok('each result matches a real run of that start year',
-    Math.abs(E.project({ ...base(), mode: 'historical', years: 20, stocksPct: 100, startYear: s.worst.year }).finalValue - s.worst.value) < 0.01)
+  // No contributions: the money-weighted return must equal simple compounding.
+  const r = E.project({ ...base(), years: 10 })
+  const rate = E.annualisedRealReturn({ ...base(), years: 10 }, r)
+  eq('lump sum only: matches the underlying real rate', rate, E.blendedReal(60, 0.025), 1e-6)
+  eq('gross = real plus inflation', E.toGross(rate, { ...base(), years: 10 }), E.blendedNominal(60), 1e-6)
+  ok('gross is always the higher of the two while inflation is positive', E.toGross(rate, base()) > rate)
 }
+{
+  // With top-ups, later money has had less time to grow, so comparing start and
+  // end values would overstate the rate. The money-weighted figure must not.
+  const inp = { ...base(), capital: 10000, years: 20, contribution: 5000, frequency: 'annual' }
+  const r = E.project(inp)
+  const rate = E.annualisedRealReturn(inp, r)
+  eq('with top-ups: still the underlying real rate', rate, E.blendedReal(60, 0.025), 1e-6)
+  const naive = Math.pow(r.finalValue / r.totalContributed, 1 / 20) - 1
+  ok('and it is not the naive start-to-end figure', Math.abs(naive - rate) > 0.005)
+}
+{
+  const inp = { ...base(), mode: 'historical', startYear: 2000, years: 20, stocksPct: 100 }
+  const rate = E.annualisedRealReturn(inp, E.project(inp))
+  const want = Math.pow(E.project(inp).finalValue / 100000, 1 / 20) - 1
+  eq('historical run, no top-ups', rate, want, 1e-6)
+  eq('gross uses the real inflation of those years', E.toGross(rate, inp),
+     (1 + rate) * Math.pow(E.historicalInflationFactor(2000, 20), 1 / 20) - 1, 1e-9)
+}
+ok('nothing invested means no rate to quote',
+  E.annualisedRealReturn({ ...base(), capital: 0, contribution: 0 }, E.project({ ...base(), capital: 0, contribution: 0 })) === undefined)
 
 console.log("\n# Today's money vs money of the day")
 eq('no inflation means no difference', E.toNominal(1000, 20, 0), 1000, 1e-9)

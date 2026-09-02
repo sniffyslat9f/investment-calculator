@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import type { CalcInputs } from "@/lib/engine"
-import { getDefaultInputs, project, summariseAllStartYears } from "@/lib/engine"
+import { getDefaultInputs, project } from "@/lib/engine"
 import { LAST_DATA_YEAR, FIRST_BOND_YEAR, FIRST_STOCK_YEAR } from "@/lib/historical-returns"
 import { InputsPanel } from "@/components/calculator/inputs-panel"
 import { Summary, type MoneyView } from "@/components/calculator/summary"
@@ -14,10 +14,6 @@ export default function CalculatorPage() {
   const [moneyView, setMoneyView] = useState<MoneyView>("real")
 
   const result = useMemo(() => project(inputs), [inputs])
-  const windows = useMemo(
-    () => (inputs.mode === "historical" ? summariseAllStartYears(inputs) : null),
-    [inputs]
-  )
 
   return (
     <main className="min-h-screen bg-background">
@@ -50,7 +46,6 @@ export default function CalculatorPage() {
               inputs={inputs}
               onInputsChange={setInputs}
               result={result}
-              windows={windows}
               moneyView={moneyView}
               onMoneyViewChange={setMoneyView}
             />

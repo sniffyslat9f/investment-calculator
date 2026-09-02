@@ -1,9 +1,10 @@
 "use client"
 
-import type { CalcInputs, Result, WindowSummary } from "@/lib/engine"
+import type { CalcInputs, Result } from "@/lib/engine"
 import {
   formatCurrency, nominalFactor, historicalInflationFactor, blendedReal,
   clampStartYear, firstAvailableYear, latestStartYear,
+  annualisedRealReturn, toGross,
 } from "@/lib/engine"
 import { NOTABLE_YEARS } from "@/lib/historical-returns"
 import { Label } from "@/components/ui/label"
@@ -11,7 +12,7 @@ import { Slider } from "@/components/ui/slider"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TrendingUp, History } from "lucide-react"
+import { TrendingUp } from "lucide-react"
 import { IOS } from "./ios-icon"
 
 export type MoneyView = "real" | "nominal"
@@ -20,23 +21,23 @@ interface Props {
   inputs: CalcInputs
   onInputsChange: (inputs: CalcInputs) => void
   result: Result
-  windows: WindowSummary | null
   moneyView: MoneyView
   onMoneyViewChange: (v: MoneyView) => void
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
+function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "good" | "bad" }) {
   return (
     <div className="rounded-lg border p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`mt-1 font-mono text-xl font-semibold ${tone === "good" ? "text-green-600" : tone === "bad" ? "text-destructive" : ""}`}>
         {value}
       </div>
+      {sub && <div className="mt-0.5 font-mono text-xs text-muted-foreground">{sub}</div>}
     </div>
   )
 }
 
-export function Summary({ inputs, onInputsChange, result, windows, moneyView, onMoneyViewChange }: Props) {
+export function Summary({ inputs, onInputsChange, result, moneyView, onMoneyViewChange }: Props) {
   // Same guard as the inputs panel: a change here can never leave the start year
   // pointing at a run that would fall off the end of the data.
   const update = (patch: Partial<CalcInputs>) => {
@@ -61,6 +62,11 @@ export function Summary({ inputs, onInputsChange, result, windows, moneyView, on
   const finalValue = show(result.finalValue, inputs.years)
   const growth = finalValue - result.totalContributed
   const multiple = result.totalContributed > 0 ? finalValue / result.totalContributed : 0
+
+  // Quoted per year, and money-weighted, so regular top-ups don't flatter it.
+  const realReturn = annualisedRealReturn(inputs, result)
+  const grossReturn = realReturn === undefined ? undefined : toGross(realReturn, inputs)
+  const pct = (v: number) => `${v >= 0 ? "" : "-"}${Math.abs(v * 100).toFixed(1)}%`
   const endYear = inputs.mode === "historical" ? inputs.startYear + inputs.years - 1 : null
 
   return (
@@ -131,7 +137,7 @@ export function Summary({ inputs, onInputsChange, result, windows, moneyView, on
           )}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
           <Stat label={`Value after ${inputs.years} years`} value={formatCurrency(finalValue)} />
           <Stat label="Total you put in" value={formatCurrency(result.totalContributed)} />
           <Stat
@@ -139,6 +145,14 @@ export function Summary({ inputs, onInputsChange, result, windows, moneyView, on
             value={`${growth >= 0 ? "+" : ""}${formatCurrency(growth)}`}
             tone={growth >= 0 ? "good" : "bad"}
           />
+          {realReturn !== undefined && grossReturn !== undefined && (
+            <Stat
+              label="Return a year"
+              value={`${pct(grossReturn)} gross`}
+              sub={`${pct(realReturn)} after inflation`}
+              tone={realReturn >= 0 ? "good" : "bad"}
+            />
+          )}
         </div>
 
         <p className="text-xs text-muted-foreground">
@@ -157,23 +171,6 @@ export function Summary({ inputs, onInputsChange, result, windows, moneyView, on
           )}
         </p>
 
-        {windows && inputs.mode === "historical" && (
-          <div className="rounded-lg border bg-muted/30 p-4">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <History className="size-4 text-muted-foreground" />
-              Every other starting point
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              The same {inputs.years} years and the same {inputs.stocksPct}/{100 - inputs.stocksPct} split,
-              run from all {windows.count} start years the data allows. In today&rsquo;s money:
-            </p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <Stat label={`Worst — from ${windows.worst.year}`} value={formatCurrency(windows.worst.value)} tone="bad" />
-              <Stat label={`Typical — from ${windows.median.year}`} value={formatCurrency(windows.median.value)} />
-              <Stat label={`Best — from ${windows.best.year}`} value={formatCurrency(windows.best.value)} tone="good" />
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   )
