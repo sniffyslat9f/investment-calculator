@@ -48,6 +48,7 @@ export default function CalculatorPage() {
           <div className="mt-5 space-y-5 lg:col-span-8 lg:mt-0">
             <Summary
               inputs={inputs}
+              onInputsChange={setInputs}
               result={result}
               windows={windows}
               moneyView={moneyView}

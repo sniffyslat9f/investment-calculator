@@ -273,14 +273,15 @@ export function formatPercent(value: number): string {
 
 export function getDefaultInputs(): CalcInputs {
   return {
-    capital: 100000,
-    stocksPct: 60,
+    capital: 25000,
+    // 90/10 — the split Warren Buffett recommends for a simple long-term portfolio.
+    stocksPct: 90,
     years: 20,
     contribution: 0,
     frequency: "monthly",
     contributionsRiseWithInflation: true,
     inflationRate: 0.025,
     mode: "average",
-    startYear: clampStartYear(60, 20, 2000),
+    startYear: clampStartYear(90, 20, 2000),
   }
 }

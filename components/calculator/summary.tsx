@@ -1,7 +1,13 @@
 "use client"
 
 import type { CalcInputs, Result, WindowSummary } from "@/lib/engine"
-import { formatCurrency, nominalFactor, historicalInflationFactor } from "@/lib/engine"
+import {
+  formatCurrency, nominalFactor, historicalInflationFactor, blendedReal,
+  clampStartYear, firstAvailableYear, latestStartYear,
+} from "@/lib/engine"
+import { NOTABLE_YEARS } from "@/lib/historical-returns"
+import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -12,6 +18,7 @@ export type MoneyView = "real" | "nominal"
 
 interface Props {
   inputs: CalcInputs
+  onInputsChange: (inputs: CalcInputs) => void
   result: Result
   windows: WindowSummary | null
   moneyView: MoneyView
@@ -29,7 +36,18 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "go
   )
 }
 
-export function Summary({ inputs, result, windows, moneyView, onMoneyViewChange }: Props) {
+export function Summary({ inputs, onInputsChange, result, windows, moneyView, onMoneyViewChange }: Props) {
+  // Same guard as the inputs panel: a change here can never leave the start year
+  // pointing at a run that would fall off the end of the data.
+  const update = (patch: Partial<CalcInputs>) => {
+    const next = { ...inputs, ...patch }
+    next.startYear = clampStartYear(next.stocksPct, next.years, next.startYear)
+    onInputsChange(next)
+  }
+
+  const firstYear = firstAvailableYear(inputs.stocksPct)
+  const lastStart = latestStartYear(inputs.stocksPct, inputs.years)
+  const notable = NOTABLE_YEARS[inputs.startYear]
   const show = (real: number, yearsElapsed: number) =>
     moneyView === "nominal" ? real * nominalFactor(inputs, yearsElapsed) : real
 
@@ -71,6 +89,48 @@ export function Summary({ inputs, result, windows, moneyView, onMoneyViewChange 
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Which returns to use — sits with the outcome it produces, not with the inputs */}
+        <div className="space-y-3 rounded-lg border p-3">
+          <Tabs value={inputs.mode} onValueChange={(v) => update({ mode: v as CalcInputs["mode"] })}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="average">Long-run average</TabsTrigger>
+              <TabsTrigger value="historical">A real period in history</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {inputs.mode === "average" ? (
+            <p className="text-xs text-muted-foreground">
+              A steady {(blendedReal(inputs.stocksPct, inputs.inflationRate) * 100).toFixed(1)}% a year
+              after inflation — the same long-run assumptions RetireWell uses.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="start" className="text-sm">
+                Starting in {inputs.startYear}
+                {notable && <span className="ml-2 font-normal text-muted-foreground">— {notable.replace(/^\d+ — /, "")}</span>}
+              </Label>
+              <Slider
+                id="start"
+                min={firstYear}
+                max={lastStart}
+                step={1}
+                value={[inputs.startYear]}
+                onValueChange={([v]) => update({ startYear: v })}
+                disabled={lastStart <= firstYear}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{firstYear}</span>
+                <span className="font-medium text-foreground">Runs {inputs.startYear} → {endYear}</span>
+                <span>{lastStart}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Stops at {lastStart}: a {inputs.years}-year run has to finish inside the data.
+                {inputs.stocksPct < 100 && " Starts at 1928 because bond data begins there."}
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-3">
           <Stat label={`Value after ${inputs.years} years`} value={formatCurrency(finalValue)} />
           <Stat label="Total you put in" value={formatCurrency(result.totalContributed)} />
