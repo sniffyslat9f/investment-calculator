@@ -7,7 +7,7 @@ returns, or on the actual year-by-year returns of any period in history.
 Built as a companion to RetireWell, sharing its visual language and, importantly,
 its verified historical returns dataset so the two tools agree with each other.
 
-**Live:** https://historic-growth-calculator.vercel.app — deployed on Vercel and
+**Live:** https://lump-sum-growth.vercel.app — deployed on Vercel and
 connected to this repo, so pushing to `main` publishes automatically.
 
 ## Running it
