@@ -46,12 +46,12 @@ export function InputsPanel({ inputs, onChange }: Props) {
           Your investment
         </CardTitle>
         <CardDescription className="mt-1">
-          All results are shown in today&rsquo;s money unless you switch the view below the summary.
+          Shown in today&rsquo;s money unless you switch the view in the summary.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        <div className="grid gap-6 sm:grid-cols-2">
+      <CardContent className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
           {/* Capital */}
           <div className="space-y-2">
             <Label htmlFor="capital">Amount to invest</Label>
@@ -107,14 +107,12 @@ export function InputsPanel({ inputs, onChange }: Props) {
             </span>
             <span>All stocks</span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Rebalanced back to this split every year, so it stays where you set it.
-          </p>
+          <p className="text-xs text-muted-foreground">Rebalanced to this split every year.</p>
         </div>
 
         {/* Contributions */}
-        <div className="space-y-3 rounded-lg border p-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-3 rounded-lg border p-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <div className="space-y-2">
               <Label htmlFor="contribution">Regular top-up (optional)</Label>
               <div className="relative">
@@ -172,13 +170,12 @@ export function InputsPanel({ inputs, onChange }: Props) {
             onValueChange={([v]) => update({ inflationRate: v / 100 })}
           />
           <p className="text-xs text-muted-foreground">
-            Used to turn the long-run average returns into today&rsquo;s money. The historical returns
-            already have real inflation removed, so this doesn&rsquo;t affect them.
+            Applies to the average-returns mode. Historical returns already have real inflation removed.
           </p>
         </div>
 
         {/* Mode */}
-        <div className="space-y-3 border-t pt-5">
+        <div className="space-y-3 border-t pt-4">
           <Label>Which returns to use</Label>
           <Tabs value={inputs.mode} onValueChange={(v) => update({ mode: v as CalcInputs["mode"] })}>
             <TabsList className="grid w-full grid-cols-2">
@@ -213,8 +210,8 @@ export function InputsPanel({ inputs, onChange }: Props) {
                 <span>{lastStart}</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                The latest possible start is {lastStart}, because a {inputs.years}-year run has to
-                finish inside the data. Change the period and this range moves with it.
+                Stops at {lastStart}: a {inputs.years}-year run has to finish inside the data.
+                {inputs.stocksPct < 100 && " Starts at 1928 because bond data begins there."}
               </p>
             </div>
           )}

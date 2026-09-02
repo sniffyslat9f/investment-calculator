@@ -21,7 +21,7 @@ export default function CalculatorPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
         <header className="mb-6 flex items-center gap-4">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-primary shadow-md">
@@ -37,17 +37,25 @@ export default function CalculatorPage() {
           </div>
         </header>
 
-        <div className="space-y-5">
-          <InputsPanel inputs={inputs} onChange={setInputs} />
-          <Summary
-            inputs={inputs}
-            result={result}
-            windows={windows}
-            moneyView={moneyView}
-            onMoneyViewChange={setMoneyView}
-          />
-          <ResultsTable inputs={inputs} result={result} moneyView={moneyView} />
-          <ResultsChart inputs={inputs} result={result} moneyView={moneyView} />
+        {/* Two columns on a wide screen: inputs stay put on the left while the
+            results scroll on the right, so a slider and its effect are visible
+            at the same time. Stacks on anything narrower. */}
+        <div className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+          <aside className="lg:col-span-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+            <InputsPanel inputs={inputs} onChange={setInputs} />
+          </aside>
+
+          <div className="mt-5 space-y-5 lg:col-span-8 lg:mt-0">
+            <Summary
+              inputs={inputs}
+              result={result}
+              windows={windows}
+              moneyView={moneyView}
+              onMoneyViewChange={setMoneyView}
+            />
+            <ResultsTable inputs={inputs} result={result} moneyView={moneyView} />
+            <ResultsChart inputs={inputs} result={result} moneyView={moneyView} />
+          </div>
         </div>
 
         <footer className="mt-8 border-t pt-5 text-xs text-muted-foreground space-y-1">

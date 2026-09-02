@@ -1,10 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import type { CalcInputs, Result } from "@/lib/engine"
 import { formatCurrency, nominalFactor } from "@/lib/engine"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Table } from "lucide-react"
 import { IOS } from "./ios-icon"
 import type { MoneyView } from "./summary"
@@ -16,8 +14,7 @@ interface Props {
 }
 
 export function ResultsTable({ inputs, result, moneyView }: Props) {
-  const [showAll, setShowAll] = useState(false)
-  const rows = showAll ? result.rows : result.rows.slice(0, 15)
+  const rows = result.rows
   const historical = inputs.mode === "historical"
 
   const show = (real: number, yearsElapsed: number) =>
@@ -31,16 +28,15 @@ export function ResultsTable({ inputs, result, moneyView }: Props) {
           Year by year
         </CardTitle>
         <CardDescription className="mt-1">
-          {moneyView === "real"
-            ? "Every year of the run, in today's £ — all figures inflation-adjusted"
-            : "Every year of the run, in the money of the day — not inflation-adjusted"}
+          {`All ${result.rows.length} years, scroll inside the table · `}
+          {moneyView === "real" ? "today's £, inflation-adjusted" : "money of the day, not inflation-adjusted"}
         </CardDescription>
       </CardHeader>
 
       <CardContent>
-        <div className="overflow-x-auto -mx-6 px-6">
+        <div className="-mx-6 max-h-[22rem] overflow-y-auto overflow-x-auto px-6">
           <table className="w-full text-xs" role="table">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b">
                 <th className="py-2 pr-3 text-left font-medium text-muted-foreground whitespace-nowrap" scope="col">Year</th>
                 <th className="py-2 px-3 text-right font-medium text-muted-foreground whitespace-nowrap" scope="col">Opening</th>
@@ -79,14 +75,6 @@ export function ResultsTable({ inputs, result, moneyView }: Props) {
             </tbody>
           </table>
         </div>
-
-        {result.rows.length > 15 && (
-          <div className="mt-3 flex justify-center">
-            <Button variant="outline" size="sm" onClick={() => setShowAll(!showAll)} className="text-xs">
-              {showAll ? "Show fewer years" : `Show all ${result.rows.length} years`}
-            </Button>
-          </div>
-        )}
 
         {historical && (
           <p className="mt-3 text-xs text-muted-foreground">
