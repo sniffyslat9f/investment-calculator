@@ -91,3 +91,21 @@ npm test          # 43 engine tests
 npx tsc --noEmit
 npm run build
 ```
+
+### One of three sibling desktop apps (Sept 2026)
+The owner's three finance tools now each have a clickable icon in `/Applications`,
+built the same way (a tiny bundle, `tools/make-mac-app.sh`, `/Applications` not
+`~/Applications`, `touch` after building). They are deliberately told apart by
+colour, all white line art on a rounded square:
+- **Investment Calculator** — green, rising chart (this one). Opens the live site.
+- **RetireWell** (`~/Code/Retirewell v2/retirewell`) — red, castle and money bag.
+  Opens its live site.
+- **RetireWell Assistant** (`~/Code/RetireWell Assistant`) — orange, deckchair.
+  Private and local-only, so its bundle starts a local server in the background
+  instead of opening a URL.
+
+Two different icon pipelines are now in use, both fine: this one **draws** its icon
+in code inside the script; the other two **crop and round a supplied picture**
+(`tools/icon-source.png`). If this icon is ever replaced with artwork rather than
+a drawing, copy the picture-based version from either sibling rather than writing a
+third.
